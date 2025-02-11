@@ -54,8 +54,13 @@ class AffiliateList(Resource):
         data = request.get_json()
         if not data or 'streamer_id' not in data or 'affiliate_url' not in data:
             return {"message": "Missing required data (streamer_id and affiliate_url)"}, 400
-        affiliate_id = create_affiliate(data)
-        return {"message": "Affiliate created successfully", "affiliate_id": str(affiliate_id)}, 201
+        try:
+            affiliate_id = create_affiliate(data)
+            return {"message": "Affiliate created successfully", "affiliate_id": str(affiliate_id)}, 201
+        except Exception as e:
+            # Loggt den Fehler und gibt eine aussagekräftige Fehlermeldung zurück
+            print("Error in POST /affiliate:", e)
+            return {"message": "Internal server error: " + str(e)}, 500
 
 # Register API endpoints
 api.add_resource(Affiliate, '/affiliate/<string:streamer_id>')
@@ -75,6 +80,6 @@ def serve_admin():
     return send_from_directory(app.static_folder, 'admin.html')
 
 if __name__ == '__main__':
-    # Dynamische Port-Konfiguration über Railway-Umgebungsvariable
-    port = 5000
+    # Verwende den von Railway vorgegebenen Port oder Standard 5000
+    port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
