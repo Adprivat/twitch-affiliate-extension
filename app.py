@@ -13,14 +13,15 @@ def require_twitch_oauth(func):
     Decorator, der sicherstellt, dass ein gültiger Twitch-OAuth-Token im Authorization-Header mitgeschickt wird.
     Das Token wird über den Twitch-Endpoint validiert und die zurückgelieferte Twitch-ID
     mit der im URL-Pfad übergebenen streamer_id verglichen.
+    Gibt bei Fehlern ein Tuple (Dictionary, Statuscode) zurück, damit Flask-RESTful die Antwort korrekt serialisiert.
     """
     def wrapper(*args, **kwargs):
         auth_header = request.headers.get("Authorization")
         if not auth_header:
-            return jsonify({"message": "Missing Authorization header"}), 401
+            return {"message": "Missing Authorization header"}, 401
         parts = auth_header.split()
         if len(parts) != 2 or parts[0].lower() != "bearer":
-            return jsonify({"message": "Invalid Authorization header format"}), 401
+            return {"message": "Invalid Authorization header format"}, 401
         token = parts[1]
         
         # Validierung des Tokens bei Twitch
@@ -29,19 +30,19 @@ def require_twitch_oauth(func):
         try:
             response = requests.get(validate_url, headers=headers)
             if response.status_code != 200:
-                return jsonify({"message": "Invalid token"}), 401
+                return {"message": "Invalid token"}, 401
             token_info = response.json()
         except Exception as e:
-            return jsonify({"message": "Error validating token", "error": str(e)}), 500
+            return {"message": "Error validating token", "error": str(e)}, 500
         
         twitch_user_id = token_info.get("user_id")
         if not twitch_user_id:
-            return jsonify({"message": "Token validation did not return user_id"}), 401
+            return {"message": "Token validation did not return user_id"}, 401
         
         streamer_id = kwargs.get("streamer_id")
-        # Wenn ein streamer_id im URL-Pfad vorhanden ist, vergleiche mit der Twitch-ID
+        # Falls eine streamer_id im URL-Pfad übergeben wurde, vergleiche mit der Twitch-ID
         if streamer_id and twitch_user_id != streamer_id:
-            return jsonify({"message": "Forbidden: You can only access your own data."}), 403
+            return {"message": "Forbidden: You can only access your own data."}, 403
         
         # Optional: Speichere die Twitch-ID in der Request-Umgebung
         request.twitch_user_id = twitch_user_id
@@ -105,7 +106,7 @@ class AffiliateList(Resource):
             print("Error in POST /affiliate:", e)
             return {"message": "Internal server error: " + str(e)}, 500
 
-# API-Endpunkte registrieren
+# Register API endpoints
 api.add_resource(Affiliate, '/affiliate/<string:streamer_id>')
 api.add_resource(AffiliateList, '/affiliate')
 
