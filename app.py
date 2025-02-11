@@ -1,4 +1,5 @@
 # app.py
+import os
 from flask import Flask, request, send_from_directory
 from flask_restful import Resource, Api
 from models import get_affiliate, create_affiliate, update_affiliate, delete_affiliate
@@ -11,7 +12,7 @@ class Affiliate(Resource):
         """
         GET /affiliate/<streamer_id>
         Retrieves affiliate data for the given streamer.
-        If no custom videos are set, default videos are provided.
+        Provides default videos if none are set.
         """
         affiliate = get_affiliate(streamer_id)
         if affiliate:
@@ -56,24 +57,24 @@ class AffiliateList(Resource):
         affiliate_id = create_affiliate(data)
         return {"message": "Affiliate created successfully", "affiliate_id": str(affiliate_id)}, 201
 
-# API-Routen registrieren
+# Register API endpoints
 api.add_resource(Affiliate, '/affiliate/<string:streamer_id>')
 api.add_resource(AffiliateList, '/affiliate')
 
-# Route für die Startseite (kann als Landing-Page dienen)
+# Serve static pages
 @app.route('/')
 def serve_index():
     return send_from_directory(app.static_folder, 'index.html')
 
-# Route für das Panel (Live-Extension)
 @app.route('/panel')
 def serve_panel():
     return send_from_directory(app.static_folder, 'panel.html')
 
-# Route für die Admin-Seite (Konfiguration)
 @app.route('/admin')
 def serve_admin():
     return send_from_directory(app.static_folder, 'admin.html')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+    # Dynamische Port-Konfiguration über Railway-Umgebungsvariable
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
