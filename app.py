@@ -1,13 +1,56 @@
 # app.py
 import os
-from flask import Flask, request, send_from_directory
+import requests
+from flask import Flask, request, send_from_directory, jsonify
 from flask_restful import Resource, Api
 from models import get_affiliate, create_affiliate, update_affiliate, delete_affiliate
 
 app = Flask(__name__, static_folder='static')
 api = Api(app)
 
+def require_twitch_oauth(func):
+    """
+    Decorator, der sicherstellt, dass ein gültiger Twitch-OAuth-Token im Authorization-Header mitgeschickt wird.
+    Das Token wird über den Twitch-Endpoint validiert und die zurückgelieferte Twitch-ID
+    mit der im URL-Pfad übergebenen streamer_id verglichen.
+    """
+    def wrapper(*args, **kwargs):
+        auth_header = request.headers.get("Authorization")
+        if not auth_header:
+            return jsonify({"message": "Missing Authorization header"}), 401
+        parts = auth_header.split()
+        if len(parts) != 2 or parts[0].lower() != "bearer":
+            return jsonify({"message": "Invalid Authorization header format"}), 401
+        token = parts[1]
+        
+        # Validierung des Tokens bei Twitch
+        validate_url = "https://id.twitch.tv/oauth2/validate"
+        headers = {"Authorization": f"Bearer {token}"}
+        try:
+            response = requests.get(validate_url, headers=headers)
+            if response.status_code != 200:
+                return jsonify({"message": "Invalid token"}), 401
+            token_info = response.json()
+        except Exception as e:
+            return jsonify({"message": "Error validating token", "error": str(e)}), 500
+        
+        twitch_user_id = token_info.get("user_id")
+        if not twitch_user_id:
+            return jsonify({"message": "Token validation did not return user_id"}), 401
+        
+        streamer_id = kwargs.get("streamer_id")
+        # Wenn ein streamer_id im URL-Pfad vorhanden ist, vergleiche mit der Twitch-ID
+        if streamer_id and twitch_user_id != streamer_id:
+            return jsonify({"message": "Forbidden: You can only access your own data."}), 403
+        
+        # Optional: Speichere die Twitch-ID in der Request-Umgebung
+        request.twitch_user_id = twitch_user_id
+        return func(*args, **kwargs)
+    wrapper.__name__ = func.__name__
+    return wrapper
+
 class Affiliate(Resource):
+    @require_twitch_oauth
     def get(self, streamer_id):
         """
         GET /affiliate/<streamer_id>
@@ -16,12 +59,10 @@ class Affiliate(Resource):
         """
         affiliate = get_affiliate(streamer_id)
         if affiliate:
-            # Convert datetime fields to ISO strings
             if "created_at" in affiliate and affiliate["created_at"]:
                 affiliate["created_at"] = affiliate["created_at"].isoformat()
             if "updated_at" in affiliate and affiliate["updated_at"]:
                 affiliate["updated_at"] = affiliate["updated_at"].isoformat()
-            # Fallback: use 3 default videos if no custom videos are provided
             if "videos" not in affiliate or not affiliate["videos"]:
                 affiliate["videos"] = [
                     "/static/videos/default1.mp4",
@@ -32,6 +73,7 @@ class Affiliate(Resource):
         else:
             return {"message": "Affiliate data not found"}, 404
 
+    @require_twitch_oauth
     def put(self, streamer_id):
         data = request.get_json()
         if not data or 'affiliate_url' not in data:
@@ -42,6 +84,7 @@ class Affiliate(Resource):
         else:
             return {"message": "No affiliate data updated"}, 404
 
+    @require_twitch_oauth
     def delete(self, streamer_id):
         deleted_count = delete_affiliate(streamer_id)
         if deleted_count:
@@ -50,6 +93,7 @@ class Affiliate(Resource):
             return {"message": "Affiliate data not found"}, 404
 
 class AffiliateList(Resource):
+    @require_twitch_oauth
     def post(self):
         data = request.get_json()
         if not data or 'streamer_id' not in data or 'affiliate_url' not in data:
@@ -58,15 +102,13 @@ class AffiliateList(Resource):
             affiliate_id = create_affiliate(data)
             return {"message": "Affiliate created successfully", "affiliate_id": str(affiliate_id)}, 201
         except Exception as e:
-            # Loggt den Fehler und gibt eine aussagekräftige Fehlermeldung zurück
             print("Error in POST /affiliate:", e)
             return {"message": "Internal server error: " + str(e)}, 500
 
-# Register API endpoints
+# API-Endpunkte registrieren
 api.add_resource(Affiliate, '/affiliate/<string:streamer_id>')
 api.add_resource(AffiliateList, '/affiliate')
 
-# Serve static pages
 @app.route('/')
 def serve_index():
     return send_from_directory(app.static_folder, 'index.html')
@@ -80,6 +122,5 @@ def serve_admin():
     return send_from_directory(app.static_folder, 'admin.html')
 
 if __name__ == '__main__':
-    # Verwende den von Railway vorgegebenen Port oder Standard 5000
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)

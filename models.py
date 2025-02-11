@@ -3,7 +3,7 @@ from pymongo import MongoClient
 from config import MONGO_URI
 import datetime
 
-# Initialisiere den MongoClient mit expliziter TLS-Nutzung
+# Initialisiere den MongoClient mit TLS aktiviert
 client = MongoClient(MONGO_URI, tls=True)
 db = client['my_affiliate_db']         # Datenbankname: my_affiliate_db
 affiliate_collection = db['affiliates'] # Collectionname: affiliates
