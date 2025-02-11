@@ -1,13 +1,13 @@
 document.addEventListener("DOMContentLoaded", function() {
-    // Für Testzwecke: Setze die streamerId manuell.
-    // In einer echten OAuth-Integration wird diese ID aus dem validierten Token stammen.
-    const streamerId = "1078778564"; // Dies ist die Twitch User ID, wie sie vom OAuth-Endpoint zurückgeliefert wird.
+    // Für Tests: Setze die streamerId manuell.
+    // In einer echten OAuth-Integration wird diese dynamisch aus dem Token abgeleitet.
+    const streamerId = "1078778564"; // Nutze hier die korrekte Twitch User ID
   
-    // Ersetze diesen Platzhalter durch einen echten, gültigen Access Token.
+    // Platzhalter für einen echten Access Token und Client-ID (sollten dynamisch gesetzt werden)
     const accessToken = "jk4f3luwq1oroz2mdyhdfmdxnjaly8";
     const clientId = "gp762nuuoqcoxypju8c569th9wz7q5";
   
-    // Funktion, um Affiliate-Daten vom Server zu laden und das Formular zu füllen.
+    // Lade vorhandene Affiliate-Daten und fülle das Formular
     function loadAffiliateData() {
       fetch(`/affiliate/${streamerId}`, {
         method: 'GET',
@@ -20,7 +20,6 @@ document.addEventListener("DOMContentLoaded", function() {
         if (response.status === 200) {
           return response.json();
         } else if (response.status === 404) {
-          // Kein Datensatz gefunden: Leere Felder lassen.
           return null;
         } else {
           throw new Error('Error loading affiliate data');
@@ -42,7 +41,6 @@ document.addEventListener("DOMContentLoaded", function() {
       });
     }
   
-    // Beim Laden des Dokuments Affiliate-Daten laden
     loadAffiliateData();
   
     // Formular-Submit: Sende einen PUT-Request, um die Einstellungen zu aktualisieren
@@ -51,7 +49,6 @@ document.addEventListener("DOMContentLoaded", function() {
       const affiliateUrl = document.getElementById("affiliateUrl").value;
       const streamerName = document.getElementById("streamerName").value;
       const videosStr = document.getElementById("videos").value;
-      // Videos als Array (aus Komma-getrennten Werten)
       const videos = videosStr.split(",").map(v => v.trim()).filter(v => v.length > 0);
   
       const payload = {

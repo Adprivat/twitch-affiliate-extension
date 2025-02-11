@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function() {
-  const streamerId = "example_streamer";
+  const streamerId = "example_streamer"; // Für Tests; in der Produktion wird die authentifizierte Twitch-User-ID verwendet.
 
   fetch(`/affiliate/${streamerId}`)
     .then(response => response.json())
@@ -25,7 +25,6 @@ document.addEventListener("DOMContentLoaded", function() {
       }));
 
       const carouselContainer = document.getElementById("video-carousel");
-
       if (!carouselContainer) {
         console.error("Carousel container (#video-carousel) not found in the DOM.");
         return;

@@ -10,10 +10,11 @@ api = Api(app)
 
 def require_twitch_oauth(func):
     """
-    Decorator, der sicherstellt, dass ein gültiger Twitch-OAuth-Token im Authorization-Header mitgeschickt wird.
-    Das Token wird über den Twitch-Endpoint validiert und die zurückgelieferte Twitch-ID
-    mit der im URL-Pfad übergebenen streamer_id verglichen.
-    Gibt bei Fehlern ein Tuple (Dictionary, Statuscode) zurück, damit Flask-RESTful die Antwort korrekt serialisiert.
+    OAuth-Decorator:
+    - Erwartet im Authorization-Header einen gültigen Bearer-Token.
+    - Validiert diesen Token über Twitchs /validate-Endpoint.
+    - Vergleicht die zurückgegebene Twitch User ID mit der im URL-Pfad übergebenen streamer_id.
+    Gibt im Fehlerfall ein Tuple (Dictionary, Statuscode) zurück, damit Flask-RESTful korrekt serialisiert.
     """
     def wrapper(*args, **kwargs):
         auth_header = request.headers.get("Authorization")
@@ -23,7 +24,7 @@ def require_twitch_oauth(func):
         if len(parts) != 2 or parts[0].lower() != "bearer":
             return {"message": "Invalid Authorization header format"}, 401
         token = parts[1]
-        
+
         # Validierung des Tokens bei Twitch
         validate_url = "https://id.twitch.tv/oauth2/validate"
         headers = {"Authorization": f"Bearer {token}"}
@@ -34,17 +35,16 @@ def require_twitch_oauth(func):
             token_info = response.json()
         except Exception as e:
             return {"message": "Error validating token", "error": str(e)}, 500
-        
+
         twitch_user_id = token_info.get("user_id")
         if not twitch_user_id:
             return {"message": "Token validation did not return user_id"}, 401
-        
+
         streamer_id = kwargs.get("streamer_id")
-        # Falls eine streamer_id im URL-Pfad übergeben wurde, vergleiche mit der Twitch-ID
         if streamer_id and twitch_user_id != streamer_id:
             return {"message": "Forbidden: You can only access your own data."}, 403
-        
-        # Optional: Speichere die Twitch-ID in der Request-Umgebung
+
+        # Speichere die Twitch-ID in der Request-Umgebung (optional)
         request.twitch_user_id = twitch_user_id
         return func(*args, **kwargs)
     wrapper.__name__ = func.__name__
@@ -55,8 +55,8 @@ class Affiliate(Resource):
     def get(self, streamer_id):
         """
         GET /affiliate/<streamer_id>
-        Retrieves affiliate data for the given streamer.
-        Provides default videos if none are set.
+        Liefert Affiliate-Daten für den angegebenen Streamer.
+        Setzt Standardvideos, falls keine eigenen vorhanden.
         """
         affiliate = get_affiliate(streamer_id)
         if affiliate:
@@ -106,10 +106,11 @@ class AffiliateList(Resource):
             print("Error in POST /affiliate:", e)
             return {"message": "Internal server error: " + str(e)}, 500
 
-# Register API endpoints
+# Registrierung der API-Endpunkte
 api.add_resource(Affiliate, '/affiliate/<string:streamer_id>')
 api.add_resource(AffiliateList, '/affiliate')
 
+# Statische Seiten (Landing, Panel, Admin) bereitstellen
 @app.route('/')
 def serve_index():
     return send_from_directory(app.static_folder, 'index.html')
@@ -122,6 +123,13 @@ def serve_panel():
 def serve_admin():
     return send_from_directory(app.static_folder, 'admin.html')
 
+# after_request: Entferne den X-Frame-Options Header, damit Twitch die Seite in einem IFrame einbetten kann.
+@app.after_request
+def add_headers(response):
+    response.headers.pop('X-Frame-Options', None)
+    return response
+
 if __name__ == '__main__':
+    # Nutzt den von Railway vorgegebenen Port oder Standard 5000
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
