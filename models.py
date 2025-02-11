@@ -3,7 +3,8 @@ from pymongo import MongoClient
 from config import MONGO_URI
 import datetime
 
-client = MongoClient(MONGO_URI)
+# Initialisiere den MongoClient mit expliziter TLS-Nutzung
+client = MongoClient(MONGO_URI, tls=True)
 db = client['my_affiliate_db']         # Datenbankname: my_affiliate_db
 affiliate_collection = db['affiliates'] # Collectionname: affiliates
 
@@ -17,7 +18,7 @@ def create_affiliate(data):
     """
     Creates a new affiliate document.
     Sets created_at and updated_at timestamps.
-    Falls ein Fehler auftritt, wird dieser geloggt und weitergegeben.
+    Logs and raises errors in case of failure.
     """
     try:
         data['created_at'] = datetime.datetime.utcnow()
