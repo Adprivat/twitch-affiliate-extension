@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Twitch Affiliate Extension - Admin</title>
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+  </head>
+  <body>
+    <h1>Admin Panel</h1>
+    <p>Configure your Affiliate URL, Streamer Name, and Videos below.</p>
+    <!-- Ein einfaches Formular, über das der Streamer seine Daten konfigurieren kann -->
+    <form id="adminForm">
+      <label for="affiliateUrl">Affiliate URL:</label><br>
+      <input type="text" id="affiliateUrl" name="affiliateUrl" placeholder="https://affiliate.example.com/yourchannel"><br><br>
+      
+      <label for="streamerName">Streamer Name:</label><br>
+      <input type="text" id="streamerName" name="streamerName" placeholder="Your Streamer Name"><br><br>
+      
+      <label for="videos">Videos (comma-separated URLs):</label><br>
+      <input type="text" id="videos" name="videos" placeholder="/static/videos/yourvideo.mp4, /static/videos/yourvideo2.mp4"><br><br>
+      
+      <button type="submit">Save</button>
+    </form>
+    
+    <script>
+      // Beispielhafte Admin-Formular-Logik; hier würden API-Aufrufe erfolgen, um die Daten zu aktualisieren.
+      document.getElementById("adminForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const affiliateUrl = document.getElementById("affiliateUrl").value;
+        const streamerName = document.getElementById("streamerName").value;
+        const videos = document.getElementById("videos").value.split(",");
+        alert("Affiliate URL: " + affiliateUrl + "\nStreamer Name: " + streamerName + "\nVideos: " + videos);
+        // Hier würde ein API-Aufruf erfolgen, um die Daten für den authentifizierten Streamer zu speichern.
+      });
+    </script>
+  </body>
+</html>
