@@ -1,5 +1,7 @@
 document.addEventListener("DOMContentLoaded", function() {
-  const streamerId = "example_streamer"; // Für Tests; in der Produktion wird die authentifizierte Twitch-User-ID verwendet.
+  // Für Testzwecke wird ein fester streamerId-Wert genutzt.
+  // In der Produktion sollte dies aus dem validierten Twitch-OAuth-Token stammen.
+  const streamerId = "example_streamer";
 
   fetch(`/affiliate/${streamerId}`)
     .then(response => response.json())
