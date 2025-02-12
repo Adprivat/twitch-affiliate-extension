@@ -11,10 +11,10 @@ api = Api(app)
 def require_twitch_oauth(func):
     """
     OAuth-Decorator:
-    - Erwartet im Authorization-Header einen gültigen Bearer-Token.
-    - Validiert diesen Token über Twitchs /validate-Endpoint.
-    - Vergleicht die zurückgelieferte Twitch User ID mit der im URL-Pfad übergebenen streamer_id.
-    Gibt bei Fehlern ein Tuple (Dictionary, Statuscode) zurück.
+      - Erwartet im Authorization-Header einen gültigen Bearer-Token.
+      - Validiert diesen Token über Twitchs /validate-Endpoint.
+      - Vergleicht die zurückgelieferte Twitch User ID mit der im URL-Pfad übergebenen streamer_id.
+      - Gibt bei Fehlern ein Tuple (Dictionary, Statuscode) zurück.
     """
     def wrapper(*args, **kwargs):
         auth_header = request.headers.get("Authorization")
@@ -39,7 +39,7 @@ def require_twitch_oauth(func):
         if not twitch_user_id:
             return {"message": "Token validation did not return user_id"}, 401
         
-        # Vergleiche den authentifizierten Twitch User mit der übergebenen streamer_id
+        # Vergleiche die validierte Twitch User ID mit der im Pfad angegebenen streamer_id
         streamer_id = kwargs.get("streamer_id")
         if streamer_id and twitch_user_id != streamer_id:
             return {"message": "Forbidden: You can only access your own data."}, 403
@@ -52,7 +52,7 @@ def require_twitch_oauth(func):
 class Affiliate(Resource):
     @require_twitch_oauth
     def get(self, streamer_id):
-        """GET /affiliate/<streamer_id>: Returns affiliate data for the given streamer."""
+        """GET /affiliate/<streamer_id>: Liefert die Affiliate-Daten für den angegebenen Streamer."""
         affiliate = get_affiliate(streamer_id)
         if affiliate:
             if "created_at" in affiliate and affiliate["created_at"]:

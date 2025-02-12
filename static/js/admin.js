@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function() {
-  // Verwende Twitch.ext.onAuthorized, um dynamisch den Access Token und die Channel ID zu erhalten
+  // Nutze Twitch.ext.onAuthorized, um den Access Token und die Channel ID dynamisch zu erhalten
   Twitch.ext.onAuthorized(function(auth) {
     const streamerId = auth.channelId;  // Dies ist die Twitch User ID des installierenden Kanals
     const accessToken = auth.token;

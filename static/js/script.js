@@ -1,10 +1,10 @@
 document.addEventListener("DOMContentLoaded", function() {
-  // Verwende Twitch.ext.onAuthorized, um den Access Token und die Channel ID zu erhalten
+  // Verwende Twitch.ext.onAuthorized, um dynamisch den Access Token und die Channel ID zu erhalten
   Twitch.ext.onAuthorized(function(auth) {
-    // auth.channelId ist die Twitch User ID des aktiven Kanals
+    // auth.channelId ist die Twitch User ID des aktuellen Kanals
     const streamerId = auth.channelId;
     const accessToken = auth.token;
-    const clientId = "gp762nuuoqcoxypju8c569th9wz7q5"; // Deine Client ID
+    const clientId = "gp762nuuoqcoxypju8c569th9wz7q5";
 
     fetch(`/affiliate/${streamerId}`, {
       method: 'GET',
