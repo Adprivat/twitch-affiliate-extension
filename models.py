@@ -24,7 +24,7 @@ def create_affiliate(data):
         raise
 
 def update_affiliate(streamer_id, affiliate_url):
-    """Updates the affiliate_url for the given streamer_id and updates the updated_at timestamp."""
+    """Updates the affiliate_url for the given streamer_id and sets updated_at."""
     result = affiliate_collection.update_one(
         {"streamer_id": streamer_id},
         {"$set": {"affiliate_url": affiliate_url, "updated_at": datetime.datetime.utcnow()}}

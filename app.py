@@ -14,7 +14,7 @@ def require_twitch_oauth(func):
     - Erwartet im Authorization-Header einen gültigen Bearer-Token.
     - Validiert diesen Token über Twitchs /validate-Endpoint.
     - Vergleicht die zurückgelieferte Twitch User ID mit der im URL-Pfad übergebenen streamer_id.
-    Gibt im Fehlerfall ein Tuple (Dictionary, Statuscode) zurück.
+    Gibt bei Fehlern ein Tuple (Dictionary, Statuscode) zurück.
     """
     def wrapper(*args, **kwargs):
         auth_header = request.headers.get("Authorization")
@@ -52,7 +52,7 @@ def require_twitch_oauth(func):
 class Affiliate(Resource):
     @require_twitch_oauth
     def get(self, streamer_id):
-        """GET /affiliate/<streamer_id>: Liefert Affiliate-Daten für den angegebenen Streamer."""
+        """GET /affiliate/<streamer_id>: Returns affiliate data for the given streamer."""
         affiliate = get_affiliate(streamer_id)
         if affiliate:
             if "created_at" in affiliate and affiliate["created_at"]:
@@ -118,7 +118,7 @@ def serve_admin():
 
 @app.after_request
 def remove_x_frame_options(response):
-    # Entferne den X-Frame-Options-Header, damit Twitch die Seite in einem IFrame laden kann.
+    # Entferne den X-Frame-Options Header, damit Twitch die Seite in einem IFrame laden kann.
     response.headers.pop("X-Frame-Options", None)
     return response
 

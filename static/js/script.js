@@ -1,9 +1,18 @@
 document.addEventListener("DOMContentLoaded", function() {
-  // Für Testzwecke wird ein fester streamerId-Wert genutzt.
-  // In der Produktion sollte dies aus dem validierten Twitch-OAuth-Token stammen.
-  const streamerId = "example_streamer";
+  // Verwende Twitch.ext.onAuthorized, um den Access Token und die Channel ID zu erhalten
+  Twitch.ext.onAuthorized(function(auth) {
+    // auth.channelId ist die Twitch User ID des aktiven Kanals
+    const streamerId = auth.channelId;
+    const accessToken = auth.token;
+    const clientId = "gp762nuuoqcoxypju8c569th9wz7q5"; // Deine Client ID
 
-  fetch(`/affiliate/${streamerId}`)
+    fetch(`/affiliate/${streamerId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Client-ID': clientId
+      }
+    })
     .then(response => response.json())
     .then(data => {
       let affiliateUrl = "#";
@@ -68,4 +77,5 @@ document.addEventListener("DOMContentLoaded", function() {
     .catch(error => {
       console.error("Error fetching affiliate data:", error);
     });
+  });
 });
